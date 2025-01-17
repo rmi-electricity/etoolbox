@@ -1,0 +1,236 @@
+etoolbox.utils
+==============
+
+.. py:module:: etoolbox.utils
+
+.. autoapi-nested-parse::
+
+   Utilities, etc.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/etoolbox/utils/arrays/index
+   /autoapi/etoolbox/utils/cloud/index
+   /autoapi/etoolbox/utils/logging_utils/index
+   /autoapi/etoolbox/utils/match/index
+   /autoapi/etoolbox/utils/misc/index
+   /autoapi/etoolbox/utils/pudl/index
+   /autoapi/etoolbox/utils/pudl_helpers/index
+   /autoapi/etoolbox/utils/remote_zip/index
+   /autoapi/etoolbox/utils/table_map/index
+   /autoapi/etoolbox/utils/testing/index
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   etoolbox.utils.Const
+   etoolbox.utils.FuncCall
+   etoolbox.utils.InSet
+   etoolbox.utils.RegexEqual
+   etoolbox.utils.Var
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   etoolbox.utils.compare_dfs
+
+
+Package Contents
+----------------
+
+.. py:function:: compare_dfs(self, other, align_col = None, decimals = 5, **kwargs)
+
+   Compare dataframes without perfect index/column alignment.
+
+   Compare two dataframes on the intersection of their columns and
+   aligned rows, roughly equivalent to pd.DataFrame.compare(self, other)
+
+   :param self: the first Dataframe (self in outputs)
+   :param other: the second Dataframe (other in outputs)
+   :param align_col: the column to align the dfs on, values should be unique, if a list,
+                     the columns will be cast as strings and concatenated. If the resulting
+                     values are not unique, duplicated values and values not in both
+                     dfs will be shown separately
+   :param decimals: Number of decimal places to round each column to.
+                    If an int is given, round each column to the same number of places.
+                    Otherwise dict and Series round to variable numbers of places.
+                    Column names should be in the keys if decimals is a dict-like. Any columns
+                    not included in decimals will be left as is. Elements of decimals
+                    which are not columns of the input will be ignored.
+   :param kwargs: keyword arguments that will be passed to
+                  :meth:`pandas.DataFrame.compare`.
+
+   Returns: a Comparison of the two dataframes
+
+
+.. py:class:: Const
+
+   :class:`.Const` provides a data holder for constants.
+
+   >>> Const.pi = 3.1415926535
+   >>> Const.pi
+   3.1415926535
+
+   >>> Var.x = 11
+   >>> match 3.1415926535:
+   ...     case Const.pi:
+   ...         print('Matches "pi"')
+   ...     case Var.x:
+   ...         print('Matches "x"')
+   Matches "pi"
+
+
+.. py:class:: FuncCall(func)
+
+   Descriptor to convert ``fc.name`` to ``func(name)``.
+
+   The :class:`FuncCall` class is a descriptor that passes the attribute name to
+   function call. Here we pass the attribute names ``x`` and ``y`` to the :func:`ord`:
+
+   >>> class A:
+   ...     x = FuncCall(ord)
+   ...     y = FuncCall(ord)
+   >>> A.x
+   120
+   >>> A.y
+   121
+
+   This is used in case clauses to call arbitrary functions using the value pattern.
+
+   This is needed when for impure functions where the value can change between
+   successive calls (otherwise you could use :class:`.Const` or :class:`Var` tools
+   shown above).
+
+   For example, consider a language translation function that changes its result
+   depending on the current language setting. We could create a namespace with dynamic
+   lookups:
+
+   .. code-block:: python
+
+       class Directions:
+           north = FuncCall(translate)
+           south = FuncCall(translate)
+           east = FuncCall(translate)
+           west = FuncCall(translate)
+
+   In the match/case statement, we use the value pattern to trigger a new function
+   call:
+
+   .. code-block:: python
+
+       def convert(direction):
+           match direction:
+               case Directions.north:
+                   return 1, 0
+               case Directions.south:
+                   return -1, 0
+               case Directions.east:
+                   return 0, 1
+               case Directions.west:
+                   return 0, -1
+               case _:
+                   raise ValueError(_("Unknown direction"))
+           print("Adjustment:", adj)
+
+   The tool is used like this:
+
+   .. code-block:: python
+
+       set_language("es")
+       convert("sur")
+       (-1, 0)
+
+       set_language("fr")
+       convert("nord")
+       (1, 0)
+
+   The case statements match the current language setting and will change when the
+   language setting changes.
+
+   Init.
+
+
+.. py:class:: InSet
+
+   Bases: :py:obj:`set`
+
+
+   Override :meth:`set.__eq__` to test set membership.
+
+   The :class:`.InSet` class inherits from set and overrides the :meth:`set.__eq__`
+   method to test for set membership:
+
+   >>> from types import SimpleNamespace
+   >>> Colors = SimpleNamespace(
+   ...     warm=InSet({"red", "orange", "yellow"}),
+   ...     cool=InSet({"green", "blue", "indigo", "violet"}),
+   ...     mixed=InSet({"purple", "brown"}),
+   ... )
+   >>> match "blue":
+   ...     case Colors.warm:
+   ...         print("warm")
+   ...     case Colors.cool:
+   ...         print("cool")
+   ...     case Colors.mixed:
+   ...         print("mixed")
+   cool
+
+   Initialize self.  See help(type(self)) for accurate signature.
+
+
+.. py:class:: RegexEqual
+
+   Bases: :py:obj:`str`
+
+
+   Override :meth:`str.__eq__` to match a regex pattern.
+
+   The :class:`.RegexEqual` class inherits from :class:`str` and overrides the
+   :meth:`str.__eq__` method to match a regular expression.
+
+   >>> bool(RegexEqual("hello") == "h.*o")
+   True
+
+   This is used in the match-clause (not a case clause). It will match cases with a
+   regex for a literal pattern:
+
+   >>> match RegexEqual("the tale of two cities"):
+   ...     case "s...y":
+   ...         print("A sad story")
+   ...     case "t..e":
+   ...         print("A mixed tale")
+   ...     case "s..a":
+   ...         print("A long read")
+   A mixed tale
+
+   Initialize self.  See help(type(self)) for accurate signature.
+
+
+.. py:class:: Var
+
+   :class:`.Var` provides a data holder for constants.
+
+   >>> Var.x = 10
+   >>> Var.x += 1
+   >>> Var.x
+   11
+   >>> match 11:
+   ...     case Var.x:
+   ...         print('Matches "x"')
+   ...     case _:
+   ...         print("No match")
+   Matches "x"
+
+

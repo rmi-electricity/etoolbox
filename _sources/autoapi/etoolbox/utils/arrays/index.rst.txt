@@ -1,0 +1,47 @@
+etoolbox.utils.arrays
+=====================
+
+.. py:module:: etoolbox.utils.arrays
+
+.. autoapi-nested-parse::
+
+   Utilities for working with :mod:`pandas` objects.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   etoolbox.utils.arrays.compare_dfs
+
+
+Module Contents
+---------------
+
+.. py:function:: compare_dfs(self, other, align_col = None, decimals = 5, **kwargs)
+
+   Compare dataframes without perfect index/column alignment.
+
+   Compare two dataframes on the intersection of their columns and
+   aligned rows, roughly equivalent to pd.DataFrame.compare(self, other)
+
+   :param self: the first Dataframe (self in outputs)
+   :param other: the second Dataframe (other in outputs)
+   :param align_col: the column to align the dfs on, values should be unique, if a list,
+                     the columns will be cast as strings and concatenated. If the resulting
+                     values are not unique, duplicated values and values not in both
+                     dfs will be shown separately
+   :param decimals: Number of decimal places to round each column to.
+                    If an int is given, round each column to the same number of places.
+                    Otherwise dict and Series round to variable numbers of places.
+                    Column names should be in the keys if decimals is a dict-like. Any columns
+                    not included in decimals will be left as is. Elements of decimals
+                    which are not columns of the input will be ignored.
+   :param kwargs: keyword arguments that will be passed to
+                  :meth:`pandas.DataFrame.compare`.
+
+   Returns: a Comparison of the two dataframes
+
+

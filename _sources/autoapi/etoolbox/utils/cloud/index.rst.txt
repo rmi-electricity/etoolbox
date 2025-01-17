@@ -1,0 +1,140 @@
+etoolbox.utils.cloud
+====================
+
+.. py:module:: etoolbox.utils.cloud
+
+.. autoapi-nested-parse::
+
+   Tools for working with RMI's Azure storage.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   etoolbox.utils.cloud.rmi_cloud_clean
+   etoolbox.utils.cloud.rmi_cloud_init
+   etoolbox.utils.cloud.read_token
+   etoolbox.utils.cloud.storage_options
+   etoolbox.utils.cloud.rmi_cloud_fs
+   etoolbox.utils.cloud.get
+   etoolbox.utils.cloud.put
+
+
+Module Contents
+---------------
+
+.. py:function:: rmi_cloud_clean(args)
+
+   Cleanup cache and config directories.
+
+
+.. py:function:: rmi_cloud_init(args)
+
+   Write SAS token file to disk.
+
+
+.. py:function:: read_token()
+
+   Read SAS token from disk or environment variable.
+
+
+.. py:function:: storage_options()
+
+   Simplify reading from Azure using :mod:`polars`.
+
+   When using :mod:`pandas` or writing to Azure, see :func:`.rmi_cloud_fs`.
+
+   .. rubric:: Examples
+
+   >>> import polars as pl
+   >>> from etoolbox.utils.cloud import storage_options
+
+   >>> df = pl.read_parquet("az://raw-data/test_data.parquet", **storage_options())
+   >>> df.select("plant_id_eia", "re_type").head()  # doctest: +NORMALIZE_WHITESPACE
+   shape: (5, 2)
+   ┌──────────────────────┬─────────┐
+   │ plant_id_eia         ┆ re_type │
+   │ ---                  ┆ ---     │
+   │ i64                  ┆ str     │
+   ╞══════════════════════╪═════════╡
+   │ -1065799821027645681 ┆ solar   │
+   │ 500701449105794732   ┆ solar   │
+   │ 5264981444132581172  ┆ solar   │
+   │ 8596148642566783026  ┆ solar   │
+   │ 8293386810295812914  ┆ solar   │
+   └──────────────────────┴─────────┘
+
+
+.. py:function:: rmi_cloud_fs(token=None)
+
+   Work with files on Azure.
+
+   This can be used to read or write arbitrary files to or from Azure. And for files
+   read from Azure, it will create and manage a local cache.
+
+   .. rubric:: Examples
+
+   >>> import pandas as pd
+   >>> from etoolbox.utils.cloud import rmi_cloud_fs
+
+   >>> fs = rmi_cloud_fs()
+   >>> df = pd.read_parquet("az://raw-data/test_data.parquet", filesystem=fs)
+   >>> df[["plant_id_eia", "re_type"]].head()  # doctest: +NORMALIZE_WHITESPACE
+             plant_id_eia re_type
+   0 -1065799821027645681   solar
+   1   500701449105794732   solar
+   2  5264981444132581172   solar
+   3  8596148642566783026   solar
+   4  8293386810295812914   solar
+
+   Read with :mod:`polars` using the same filecache as with :mod:`pandas`.
+
+   >>> import polars as pl
+
+   >>> with fs.open("az://raw-data/test_data.parquet") as f:
+   ...     df = pl.read_parquet(f)
+   >>> df.select("plant_id_eia", "re_type").head()  # doctest: +NORMALIZE_WHITESPACE
+   shape: (5, 2)
+   ┌──────────────────────┬─────────┐
+   │ plant_id_eia         ┆ re_type │
+   │ ---                  ┆ ---     │
+   │ i64                  ┆ str     │
+   ╞══════════════════════╪═════════╡
+   │ -1065799821027645681 ┆ solar   │
+   │ 500701449105794732   ┆ solar   │
+   │ 5264981444132581172  ┆ solar   │
+   │ 8596148642566783026  ┆ solar   │
+   │ 8293386810295812914  ┆ solar   │
+   └──────────────────────┴─────────┘
+
+   Write a parquet, or really anythin to Azure...
+
+   >>> with fs.open("az://raw-data/file.parquet", mode="wb") as f:  # doctest: +SKIP
+   ...     df.write_parquet(f)
+
+
+.. py:function:: get(to_get_path, destination, fs=None)
+
+   Download a remote file from the cloud.
+
+   :param to_get_path: remote file or folder to download of the form '<container>/...
+   :param destination: local destination for the downloaded files
+   :param fs: filesystem
+
+
+.. py:function:: put(to_put_path, destination, fs=None)
+
+   Upload local files or directories to the cloud.
+
+   Copies a specific file or tree of files. If destination
+   ends with a "/", it will be assumed to be a directory, and target files
+   will go within.
+
+   :param to_put_path: local file or folder to copy
+   :param destination: copy destination of the form '<container>/...
+   :param fs: filesystem
+
+

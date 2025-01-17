@@ -1,0 +1,27 @@
+etoolbox.main
+=============
+
+.. py:module:: etoolbox.main
+
+.. autoapi-nested-parse::
+
+   etoolbox CLI utility functions.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   etoolbox.main.main
+
+
+Module Contents
+---------------
+
+.. py:function:: main()
+
+   CLI entry point.
+
+

@@ -1,0 +1,105 @@
+etoolbox.utils.logging_utils
+============================
+
+.. py:module:: etoolbox.utils.logging_utils
+
+.. autoapi-nested-parse::
+
+   Helpers from mCoding for better logging.
+
+   These tools are a selection of those included described by mCoding in
+   `this video <https://www.youtube.com/watch?v=9L77QExPmI0>`_ available as source
+   `here <https://github.com/mCodingLLC/VideosSampleCode/tree/master/videos/135_modern_logging>`_.
+
+   From the original:
+
+   Copyright (c) 2022 MCODING, LLC
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in all
+   copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   etoolbox.utils.logging_utils.JSONFormatter
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   etoolbox.utils.logging_utils.setup_logging
+
+
+Module Contents
+---------------
+
+.. py:function:: setup_logging(filename, config_file = None, config = None)
+
+   Set up logging with a queue handler.
+
+   If neither config_file nor config is provided, use default logging config
+   :const:`DEFAULT_LOGGING_CONFIG`.
+
+   :param filename: path to log file
+   :param config_file: path to config file
+   :param config: config dictionary
+
+
+.. py:class:: JSONFormatter(*, fmt_keys = None)
+
+   Bases: :py:obj:`logging.Formatter`
+
+
+   A JSON formatter for use in :class:`logging.Logger` objects.
+
+   Initialize the formatter with specified format strings.
+
+   Initialize the formatter either with the specified format string, or a
+   default as described above. Allow for specialized date formatting with
+   the optional datefmt argument. If datefmt is omitted, you get an
+   ISO8601-like (or RFC 3339-like) format.
+
+   Use a style parameter of '%', '{' or '$' to specify that you want to
+   use one of %-formatting, :meth:`str.format` (``{}``) formatting or
+   :class:`string.Template` formatting in your format string.
+
+   .. versionchanged:: 3.2
+      Added the ``style`` parameter.
+
+
+   .. py:method:: format(record)
+
+      Format the specified record as text.
+
+      The record's attribute dictionary is used as the operand to a
+      string formatting operation which yields the returned string.
+      Before formatting the dictionary, a couple of preparatory steps
+      are carried out. The message attribute of the record is computed
+      using LogRecord.getMessage(). If the formatting string uses the
+      time (as determined by a call to usesTime(), formatTime() is
+      called to format the event time. If there is exception information,
+      it is formatted using formatException() and appended to the message.
+
+
+

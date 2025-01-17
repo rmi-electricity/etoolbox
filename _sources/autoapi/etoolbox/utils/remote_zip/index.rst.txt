@@ -1,0 +1,84 @@
+etoolbox.utils.remote_zip
+=========================
+
+.. py:module:: etoolbox.utils.remote_zip
+
+.. autoapi-nested-parse::
+
+   Access files within a zip archive without downloading the full archive.
+
+   This remote_zip module and accompanying tests are lightly adapted from
+   the `python-remotezip <https://github.com/gtsystem/python-remotezip>`_ package written
+   by Giuseppe Tribulato (gtsystem) with contributions from Kim (SpicyGarlicAlbacoreRoll),
+   and M. Furkan (muhammedfurkan). From the original:
+
+   MIT License
+
+   Copyright (c) 2018 Giuseppe Tribulato
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including withlout limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in all
+   copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+
+
+
+Exceptions
+----------
+
+.. autoapisummary::
+
+   etoolbox.utils.remote_zip.RemoteIOError
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   etoolbox.utils.remote_zip.RemoteZip
+
+
+Module Contents
+---------------
+
+.. py:exception:: RemoteIOError
+
+   Bases: :py:obj:`RemoteZipError`
+
+
+   IO error for RemoteZip.
+
+   Initialize self.  See help(type(self)) for accurate signature.
+
+
+.. py:class:: RemoteZip(url, initial_buffer_size = 64 * 1024, session=None, fetcher=_RemoteFetcher, *, support_suffix_range = True, **kwargs)
+
+   Bases: :py:obj:`zipfile.ZipFile`
+
+
+   ZipFile that only downloads files when you ask for them.
+
+   Create a object that represents a remote zip file.
+
+   :param url: URL to the remote zip file.
+   :param initial_buffer_size:
+   :param session:
+   :param fetcher:
+   :param support_suffix_range:
+   :param \*\*kwargs:
+
+

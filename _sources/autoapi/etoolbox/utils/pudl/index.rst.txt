@@ -1,0 +1,183 @@
+etoolbox.utils.pudl
+===================
+
+.. py:module:: etoolbox.utils.pudl
+
+.. autoapi-nested-parse::
+
+   Functions and objects for accessing PUDL data.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   etoolbox.utils.pudl.PretendPudlTablCore
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   etoolbox.utils.pudl.rmi_pudl_clean
+   etoolbox.utils.pudl.pudl_list
+   etoolbox.utils.pudl.pd_read_pudl
+   etoolbox.utils.pudl.pl_scan_pudl
+   etoolbox.utils.pudl.pl_read_pudl
+   etoolbox.utils.pudl.generator_ownership
+   etoolbox.utils.pudl.conform_pudl_dtypes
+   etoolbox.utils.pudl.get_pudl_sql_url
+
+
+Module Contents
+---------------
+
+.. py:function:: rmi_pudl_clean(args=None, *, dry = True, legacy = False)
+
+   Remove rmi.pudl local cache.
+
+
+.. py:function:: pudl_list(release = 'nightly', token = None, *, detail = False)
+
+   List PUDL tables in AWS using ``ls`` command.
+
+   :param release: ``nightly``, ``stable`` or versioned, pass ``None`` to list all
+   :param token: ignored
+   :param detail: if True, return details of each table, otherwise just names
+
+   .. rubric:: Examples
+
+   >>> from etoolbox.utils.pudl import pudl_list
+
+   List PUDL releases, the actual release is the part after the ``/``.
+
+   >>> pudl_list(None)  # doctest: +ELLIPSIS
+   ['pudl.catalyst.coop/nightly', 'pudl.catalyst.coop/stable', ...]
+
+   For the most recent, you want the last on the list ie ``releases[-1]``
+
+
+.. py:function:: pd_read_pudl(table_name, release = 'nightly', token = None, filters=None, *, date_as_object = False, **kwargs)
+
+   Read PUDL table from AWS as :class:`pandas.DataFrame`.
+
+   :param table_name: name of table in PUDL sqlite database
+   :param release: ``nightly``, ``stable`` or versioned, use :func:`.pudl_list` to
+                   see releases.
+   :param token: ignored
+   :param filters: passed to :func:`pyarrow.parquet.read_table`
+   :param date_as_object: Cast dates to objects. If False, convert to datetime64
+                          dtype with the equivalent time unit (if supported), this is the default
+                          here, differing from that in :func:`pyarrow.Table.to_pandas`.
+   :param kwargs: passed to :func:`pyarrow.Table.to_pandas`
+
+
+.. py:function:: pl_scan_pudl(table_name, release = 'nightly', token = None, *, use_polars=False, **kwargs)
+
+   Read PUDL table from AWS as :class:`polars.LazyFrame`.
+
+   .. note::
+
+      Accessing PUDL tables directly from AWS using polars requires version 0.20
+      or higher.
+
+   :param table_name: name of table in PUDL sqlite database
+   :param release: ``nightly``, ``stable`` or versioned, use :func:`.pudl_list` to
+                   see releases.
+   :param token: ignored
+   :param use_polars: If ``True``, use polars AWS client (currently nonfunctional), this
+                      does not work with local caching. If ``False``, use
+                      :class:`fsspec.implementations.cached.WholeFileCacheFileSystem`
+                      for file access and caching.
+   :param kwargs: passed to :func:`polars.scan_parquet`
+
+
+.. py:function:: pl_read_pudl(table_name, release = 'nightly', token = None, *, use_polars=False, **kwargs)
+
+   Read PUDL table from AWS as :class:`polars.DataFrame`.
+
+   .. note::
+
+      Accessing PUDL tables directly from AWS using polars requires version 0.20
+      or higher.
+
+   :param table_name: name of table in PUDL sqlite database
+   :param release: ``nightly``, ``stable`` or versioned, use :func:`.pudl_list` to
+                   see releases.
+   :param token: ignored
+   :param use_polars: use polars AWS client rather than s3fs, this does not
+                      work with local caching (must be false until we fix)
+   :param kwargs: passed to :func:`polars.scan_parquet`
+
+
+.. py:function:: generator_ownership(year = None, release = 'nightly')
+
+   Generator ownership.
+
+   :param year: year of report date to use
+   :param release: ``nightly``, ``stable`` or versioned, use :func:`.pudl_list` to
+                   see releases.
+
+   .. rubric:: Examples
+
+   >>> from etoolbox.utils.pudl import generator_ownership
+   >>>
+   >>> generator_ownership(year=2023, release="v2024.10.0").sort(
+   ...     "plant_id_eia"
+   ... ).select("plant_id_eia", "generator_id", "owner_utility_id_eia").head()
+   shape: (5, 3)
+   ┌──────────────┬──────────────┬──────────────────────┐
+   │ plant_id_eia ┆ generator_id ┆ owner_utility_id_eia │
+   │ ---          ┆ ---          ┆ ---                  │
+   │ i64          ┆ str          ┆ i64                  │
+   ╞══════════════╪══════════════╪══════════════════════╡
+   │ 1            ┆ 1            ┆ 63560                │
+   │ 1            ┆ 2            ┆ 63560                │
+   │ 1            ┆ 3            ┆ 63560                │
+   │ 1            ┆ 5.1          ┆ 63560                │
+   │ 1            ┆ WT1          ┆ 63560                │
+   └──────────────┴──────────────┴──────────────────────┘
+
+
+.. py:function:: conform_pudl_dtypes(df)
+
+   Conform types of PUDL columns to those in PudlTabl.
+
+   :param df: a dataframe with columns from PUDL
+
+   Returns: the pudl table with standardized dtypes
+
+   .. rubric:: Examples
+
+   .. code-block:: python
+
+       import pandas as pd
+       import sqlalchemy as sa
+
+       from etoolbox.utils.pudl import get_pudl_sql_url, conform_pudl_dtypes
+
+       pd.read_sql_table(table_name, sa.create_engine(get_pudl_sql_url())).pipe(
+           conform_pudl_dtypes
+       )
+
+
+.. py:function:: get_pudl_sql_url(file=PUDL_CONFIG)
+
+   Get the URL for the pudl.sqlite DB.
+
+
+.. py:class:: PretendPudlTablCore
+
+   A DataZip of a PudlTabl can be recreated with this to avoid importing PUDL.
+
+   .. admonition:: DeprecationWarning
+      :class: warning
+
+      ``PretendPudlTablCore`` will be removed in a future version, read tables directly
+      from the sqlite.
+
+
+

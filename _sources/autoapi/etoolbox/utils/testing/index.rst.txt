@@ -1,0 +1,60 @@
+etoolbox.utils.testing
+======================
+
+.. py:module:: etoolbox.utils.testing
+
+.. autoapi-nested-parse::
+
+   Helpers for tests.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   etoolbox.utils.testing.idfn
+   etoolbox.utils.testing.assert_equal
+   etoolbox.utils.testing.capture
+
+
+Module Contents
+---------------
+
+.. py:function:: idfn(val)
+
+   ID function for pytest parameterization.
+
+
+.. py:function:: assert_equal(left, right, check_pd_dtype=True)
+
+   Recursively check that left and right objects are equal.
+
+
+.. py:function:: capture(func, *args, **kwargs)
+
+   Return a tuple with the returned exception and value.
+
+   Allows you to test that two implementations of func return
+   the same result or the same error.
+
+   .. rubric:: Examples
+
+   Function with args returns result
+
+   >>> capture(sum, (1, 2, 3))
+   (None, 6)
+
+   Function with args produces an error
+
+   >>> capture(sum, (1, "3", 3))
+   (<class 'TypeError'>, None)
+
+   Different implementations produce the same error
+
+   >>> import math
+   >>> capture(sum, (1, "3", 3)) == capture(math.fsum, (1, "3", 3))
+   True
+
+

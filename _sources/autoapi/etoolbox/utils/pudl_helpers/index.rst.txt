@@ -1,0 +1,249 @@
+etoolbox.utils.pudl_helpers
+===========================
+
+.. py:module:: etoolbox.utils.pudl_helpers
+
+.. autoapi-nested-parse::
+
+   Helpers from PUDL for working with EIA and similar data.
+
+   These helpers are a selection of those included in the :mod:`pudl.helpers` module of the
+   `catalystcoop.pudl <https://github.com/catalyst-cooperative/pudl>`_ package created by
+   `Catalyst Cooperative <https://catalyst.coop>`_. From the original:
+
+   Copyright 2017-2022 Catalyst Cooperative
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy of
+   this software and associated documentation files (the "Software"), to deal in
+   the Software without restriction, including without limitation the rights to
+   use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+   of the Software, and to permit persons to whom the Software is furnished to do
+   so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in all
+   copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   etoolbox.utils.pudl_helpers.fix_int_na
+   etoolbox.utils.pudl_helpers.month_year_to_date
+   etoolbox.utils.pudl_helpers.remove_leading_zeros_from_numeric_strings
+   etoolbox.utils.pudl_helpers.fix_eia_na
+   etoolbox.utils.pudl_helpers.simplify_columns
+   etoolbox.utils.pudl_helpers.zero_pad_numeric_string
+   etoolbox.utils.pudl_helpers.weighted_average
+   etoolbox.utils.pudl_helpers.sum_and_weighted_average_agg
+
+
+Module Contents
+---------------
+
+.. py:function:: fix_int_na(df, columns, float_na=np.nan, int_na=-1, str_na='')
+
+   Convert NA containing integer columns from float to string.
+
+   Numpy doesn't have a real NA value for integers. When pandas stores integer
+   data which has NA values, it thus upcasts integers to floating point
+   values, using np.nan values for NA. However, in order to dump some of our
+   dataframes to CSV files for use in data packages, we need to write out
+   integer formatted numbers, with empty strings as the NA value. This
+   function replaces np.nan values with a sentinel value, converts the column
+   to integers, and then to strings, finally replacing the sentinel value with
+   the desired NA string.
+
+   This is an interim solution -- now that pandas extension arrays have been
+   implemented, we need to go back through and convert all of these integer
+   columns that contain NA values to Nullable Integer types like Int64.
+
+   :param df: The dataframe to be fixed. This argument allows
+              method chaining with the pipe() method.
+   :type df: pandas.DataFrame
+   :param columns: A list of DataFrame column labels
+                   indicating which columns need to be reformatted for output.
+   :type columns: iterable of strings
+   :param float_na: The floating point value to be interpreted as NA and
+                    replaced in col.
+   :type float_na: float
+   :param int_na: Sentinel value to substitute for float_na prior to
+                  conversion of the column to integers.
+   :type int_na: int
+   :param str_na: sa.String value to substitute for int_na after the column
+                  has been converted to strings.
+   :type str_na: str
+
+   :returns: a new DataFrame, with the selected columns
+             converted to strings that look like integers, compatible with
+             the postgresql COPY FROM command.
+   :rtype: df (pandas.DataFrame)
+
+
+.. py:function:: month_year_to_date(df)
+
+   Convert all pairs of year/month fields in a dataframe into Date fields.
+
+   This function finds all column names within a dataframe that match the
+   regular expression '_month$' and '_year$', and looks for pairs that have
+   identical prefixes before the underscore. These fields are assumed to
+   describe a date, accurate to the month.  The two fields are used to
+   construct a new _date column (having the same prefix) and the month/year
+   columns are then dropped.
+
+   .. todo::
+
+      This function needs to be combined with convert_to_date, and improved:
+      * find and use a _day$ column as well
+      * allow specification of default month & day values, if none are found.
+      * allow specification of lists of year, month, and day columns to be
+      combined, rather than automataically finding all the matching ones.
+      * Do the Right Thing when invalid or NA values are encountered.
+
+   :param df: The DataFrame in which to convert year/months
+              fields to Date fields.
+   :type df: pandas.DataFrame
+
+   :returns: A DataFrame in which the year/month fields have been
+             converted into Date fields.
+   :rtype: pandas.DataFrame
+
+
+.. py:function:: remove_leading_zeros_from_numeric_strings(df, col_name)
+
+   Remove leading zeros frame column values that are numeric strings.
+
+   Sometimes an ID column (like generator_id or unit_id) will be reported with leading
+   zeros and sometimes it won't. For example, in the Excel spreadsheets published by
+   EIA, the same generator may show up with the ID "0001" and "1" in different years
+   This function strips the leading zeros from those numeric strings so the data can
+   be mapped accross years and datasets more reliably.
+
+   Alphanumeric generator IDs with leadings zeroes are not affected, as we
+   found no instances in which an alphanumeric ID appeared both with
+   and without leading zeroes. The ID "0A1" will stay "0A1".
+
+   :param df: A DataFrame containing the column you'd like to remove numeric leading zeros
+              from.
+   :param col_name: The name of the column you'd like to remove numeric leading zeros
+                    from.
+
+   :returns: A DataFrame without leading zeros for numeric string values in the desired
+             column.
+
+
+.. py:function:: fix_eia_na(df)
+
+   Replace common ill-posed EIA NA spreadsheet values with np.nan.
+
+   Currently replaces empty string, single decimal points with no numbers,
+   and any single whitespace character with np.nan.
+
+   :param df: The DataFrame to clean.
+   :type df: pandas.DataFrame
+
+   :returns: The cleaned DataFrame.
+   :rtype: pandas.DataFrame
+
+
+.. py:function:: simplify_columns(df)
+
+   Simplify column labels for use as snake_case database fields.
+
+   All columns will be re-labeled by:
+   * Replacing all non-alphanumeric characters with spaces.
+   * Forcing all letters to be lower case.
+   * Compacting internal whitespace to a single " ".
+   * Stripping leading and trailing whitespace.
+   * Replacing all remaining whitespace with underscores.
+
+   :param df: The DataFrame to clean.
+   :type df: pandas.DataFrame
+
+   :returns: The cleaned DataFrame.
+   :rtype: pandas.DataFrame
+
+   .. todo:: Update docstring.
+
+
+.. py:function:: zero_pad_numeric_string(col, n_digits)
+
+   Clean up fixed-width leading zero padded numeric (e.g. ZIP, FIPS) codes.
+
+   Often values like ZIP and FIPS codes are stored as integers, or get
+   converted to floating point numbers because there are NA values in the
+   column. Sometimes other non-digit strings are included like Canadian
+   postal codes mixed in with ZIP codes, or IMP (imported) instead of a
+   FIPS county code. This function attempts to manage these irregularities
+   and produce either fixed-width leading zero padded strings of digits
+   having a specified length (n_digits) or NA.
+
+   * Convert the Series to a nullable string.
+   * Remove any decimal point and all digits following it.
+   * Remove any non-digit characters.
+   * Replace any empty strings with NA.
+   * Replace any strings longer than n_digits with NA.
+   * Pad remaining digit-only strings to n_digits length.
+   * Replace (invalid) all-zero codes with NA.
+
+   :param col: The Series to clean. May be numeric, string, object, etc.
+   :param n_digits: the desired length of the output strings.
+
+   :returns: A Series of nullable strings, containing only all-numeric strings
+             having length n_digits, padded with leading zeroes if necessary.
+
+
+.. py:function:: weighted_average(df, data_col, weight_col, by)
+
+   Generate a weighted average.
+
+   :param df: A DataFrame containing, at minimum, the columns
+              specified in the other parameters data_col and weight_col.
+   :type df: pandas.DataFrame
+   :param data_col: column name of data column to average
+   :type data_col: string
+   :param weight_col: column name to weight on
+   :type weight_col: string
+   :param by: A list of the columns to group by when calcuating
+              the weighted average value.
+   :type by: list
+
+   :returns: a table with ``by`` columns as the index and the
+             weighted ``data_col``.
+   :rtype: pandas.DataFrame
+
+
+.. py:function:: sum_and_weighted_average_agg(df_in, by, sum_cols = None, agg_dict = None, wtavg_dict = None)
+
+   Aggregate dataframe by summing and using weighted averages.
+
+   Many times we want to aggreate a data table using the same groupby columns
+   but with different aggregation methods. This function combines two of our
+   most common aggregation methods (summing and applying a weighted average)
+   into one function. Because pandas does not have a built-in weighted average
+   method for groupby we use :func:`weighted_average`.
+
+   :param df_in: input table to aggregate. Must have columns
+                 in ``id_cols``, ``sum_cols`` and keys from ``wtavg_dict``.
+   :param by: columns to group/aggregate based on. These columns
+              will be passed as an argument into grouby as ``by`` arg.
+   :param sum_cols: columns to sum.
+   :param agg_dict: dictionary of columns (keys) and function (values) passed to
+                    :meth:`pandas.DataFrame.agg`.
+   :param wtavg_dict: dictionary of columns to average (keys) and
+                      columns to weight by (values).
+
+   :returns: table with join of columns from ``by``, ``sum_cols`` and keys of
+             ``wtavg_dict``. Primary key of table will be ``by``.
+
+

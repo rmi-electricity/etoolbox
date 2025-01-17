@@ -1,0 +1,11 @@
+etoolbox.utils.table_map
+========================
+
+.. py:module:: etoolbox.utils.table_map
+
+.. autoapi-nested-parse::
+
+   Script to rename PUDL tables in a set of files.
+
+
+

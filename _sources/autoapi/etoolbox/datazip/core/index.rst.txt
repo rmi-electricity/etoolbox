@@ -1,0 +1,314 @@
+etoolbox.datazip.core
+=====================
+
+.. py:module:: etoolbox.datazip.core
+
+.. autoapi-nested-parse::
+
+   Code for :class:`.DataZip`.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   etoolbox.datazip.core.DataZip
+
+
+Module Contents
+---------------
+
+.. py:class:: DataZip(file, mode='r', ignore_pd_dtypes=False, *args, **kwargs)
+
+   Bases: :py:obj:`zipfile.ZipFile`
+
+
+   A :class:`ZipFile` with methods for easier use with Python objects.
+
+   Create a DataZip.
+
+   :param file: Either the path to the file, or a file-like object.
+                If it is a path, the file will be opened and closed by DataZip.
+   :param mode: The mode can be either read 'r', or write 'w'.
+   :param recipes: Deprecated.
+   :param compression: ZIP_STORED (no compression), ZIP_DEFLATED (requires zlib),
+                       ZIP_BZIP2 (requires bz2) or ZIP_LZMA (requires lzma).
+   :param ignore_pd_dtypes: if True, any dtypes stored in a DataZip for
+                            :class:`pandas.DataFrame` columns or :class:`pandas.Series` will be
+                            ignored. This may be useful when using global settings for
+                            ``mode.dtype_backend`` or ``mode.use_nullable_dtypes`` to force the use
+                            of ``pyarrow`` types.
+   :param args: additional positional will be passed to
+                :meth:`zipfile.ZipFile.__init__`.
+   :param kwargs: keyword arguments will be passed to
+                  :meth:`zipfile.ZipFile.__init__`.
+
+   .. rubric:: Examples
+
+   First we can create a :class:`.DataZip`. In this case we are using a buffer
+   (:class:`io.BytesIO`) for convenience. In most cases though, ``file`` would be
+   a :class:`pathlib.Path` or :class:`str` that represents a file. In these cases
+   a ``.zip`` extension will be added if it is not there already.
+
+   >>> buffer = BytesIO()  # can also be a file-like object
+   >>> with DataZip(file=buffer, mode="w") as z0:
+   ...     z0["df"] = pd.DataFrame({(0, "a"): [2.4, 8.9], (0, "b"): [3.5, 6.2]})
+   ...     z0["foo"] = {
+   ...         "a": (1, (2, {3})),
+   ...         "b": frozenset({1.5, 3}),
+   ...         "c": 0.9 + 0.2j,
+   ...     }
+
+   Getting items from :class:`.DataZip`, like setting them, uses standard Python
+   subscripting.
+
+   For :class:`pandas.DataFrame`, it stores them as ``parquet`` and preserves
+   :class:`pandas.MultiIndex` columns, even when they cannot normally be stored
+   in a ``parquet`` file.
+
+   >>> with DataZip(buffer, "r") as z1:
+   ...     z1["df"]  # doctest: +NORMALIZE_WHITESPACE
+        0
+        a    b
+   0  2.4  3.5
+   1  8.9  6.2
+
+   While always preferable to use a context manager as above, here it's more
+   convenient to keep the object open. Even more unusual types that can't normally
+   be stored in json should work.
+
+   >>> z1 = DataZip(buffer, "r")
+   >>> z1["foo"]
+   {'a': (1, (2, {3})), 'b': frozenset({1.5, 3}), 'c': (0.9+0.2j)}
+
+   Checking to see if an item is in a :class:`.DataZip` uses standard Python
+   syntax.
+
+   >>> "df" in z1
+   True
+
+   You can also check by filename. And check the number of items.
+
+   >>> "df.parquet" in z1
+   True
+
+   >>> len(z1)
+   2
+
+   When not used with a context manager, :class:`.DataZip` should close itself
+   automatically but it's not a bad idea to make sure.
+
+   >>> z1.close()
+
+   A :class:`.DataZip` is a write-once, read-many affair because of the way
+   ``zip`` files work. Appending to a :class:`.DataZip` can be done with the
+   :meth:`.DataZip.replace` method.
+
+   >>> buffer1 = BytesIO()
+   >>> with DataZip.replace(buffer1, buffer, foo=5, bar=6) as z:
+   ...     z["new"] = "foo"
+   ...     z["foo"]
+   5
+
+
+   .. py:method:: dump(obj, file, **kwargs)
+      :staticmethod:
+
+
+      Write the DataZip representation of ``obj`` to ``file``.
+
+      :param obj: A Python object, it must implement ``__getstate__`` and
+                  ``__setstate__``. There are other restrictions, especially if it
+                  contains instances of other custom Python objects, it may be enough
+                  for all of them to implement ``__getstate__`` and ``__setstate__``.
+      :param file: a file-like object, or a buffer where the :class:`DataZip`
+                   will be saved.
+      :param kwargs: keyword arguments will be passed to :class:`.DataZip`.
+
+      :returns: None
+
+      .. rubric:: Examples
+
+      Create an object that you would like to save as a :class:`.DataZip`.
+
+      >>> from etoolbox.datazip._test_classes import _TestKlass
+      >>> obj = _TestKlass(a=5, b={"c": [2, 3.5]})
+      >>> obj
+      _TestKlass(a=5, b={'c': [2, 3.5]})
+
+      Save the object as a :class:`.DataZip`.
+
+      >>> buffer = BytesIO()
+      >>> DataZip.dump(obj, buffer)
+      >>> del obj
+
+      Get it back.
+
+      >>> obj = DataZip.load(buffer)
+      >>> obj
+      _TestKlass(a=5, b={'c': [2, 3.5]})
+
+
+
+   .. py:method:: load(file, klass = None)
+      :staticmethod:
+
+
+      Return the reconstituted object specified in the file.
+
+      :param file: a file-like object, or a buffer from which the :class:`DataZip`
+                   will be read.
+      :param klass: (Optional) allows passing the class when it is known, this
+                    is handy when it is not possible to import the module that defines
+                    the class that ``file`` represents.
+
+      :returns: Object from :class:`DataZip`.
+
+      .. rubric:: Examples
+
+      See :meth:`.DataZip.dump` for examples.
+
+
+
+   .. py:method:: replace(file_or_new_buffer, old_buffer=None, save_old=False, iterwrap=None, **kwargs)
+      :classmethod:
+
+
+      Replace an old :class:`DataZip` with an editable new one.
+
+      Note: Data and keys that are copied over by this function cannot be reliably
+      mutated.``kwargs`` must be used to replace the data associated with keys that
+      exist in the old :class:`DataZip`.
+
+      :param file_or_new_buffer: Either the path to the file to be replaced
+                                 or the new buffer.
+      :param old_buffer: only required if ``file_or_new_buffer`` is a buffer.
+      :param save_old: if True, the old :class:`DataZip` will be
+                       saved with "_old" appended, if False it will be
+                       deleted when the new :class:`DataZip` is closed.
+      :param iterwrap: this will be used to wrap the iterator that handles
+                       copying data to the new :class:`DataZip` to enable a progress
+                       bar, i.e. ``tqdm``.
+      :param kwargs: data that should be written into the new :class:`DataZip`,
+                     for any keys that were in the old :class:`DataZip`, the new
+                     value provided here will be used instead.
+
+      :returns: New editable :class:`DataZip` with old data copied into it.
+
+      .. rubric:: Examples
+
+      Create a new test file object and put a datazip in it.
+
+      >>> file = Path.home() / "test.zip"
+      >>> with DataZip(file=file, mode="w") as z0:
+      ...     z0["series"] = pd.Series([1, 2, 4], name="series")
+
+      Create a replacement DataZip.
+
+      >>> z1 = DataZip.replace(file, save_old=False)
+
+      The replacement has the old content.
+
+      >>> z1["series"]
+      0    1
+      1    2
+      2    4
+      Name: series, dtype: int64
+
+      We can also now add to it.
+
+      >>> z1["foo"] = "bar"
+
+      While the replacement is open, the old verion still exists.
+
+      >>> (Path.home() / "test_old.zip").exists()
+      True
+
+      Now we close the replacement which deletes the old file.
+
+      >>> z1.close()
+      >>> (Path.home() / "test_old.zip").exists()
+      False
+
+      Reopening the replacement, we see it contains all the objects.
+
+      >>> z2 = DataZip(file, "r")
+
+      >>> z2["series"]
+      0    1
+      1    2
+      2    4
+      Name: series, dtype: int64
+
+      >>> z1["foo"]
+      'bar'
+
+      And now some final test cleanup.
+
+      >>> z2.close()
+      >>> file.unlink()
+
+
+
+   .. py:method:: close()
+
+      Close the file, and for mode 'w' write attributes and metadata.
+
+
+
+   .. py:method:: get(key, default=None)
+
+      Retrieve an item if it is there otherwise return default.
+
+
+
+   .. py:method:: reset_ids()
+
+      Reset the internal record of stored ids.
+
+      Because 'two objects with non-overlapping lifetimes may have the same
+      :func:`id` value', it can be useful to reset the set of seen ids when
+      you are adding objects with non-overlapping lifetimes.
+
+      See :func:`id`.
+
+
+
+   .. py:method:: items()
+
+      Lazily read name/key valye pairs from a :class:`.DataZip`.
+
+
+
+   .. py:method:: keys()
+
+      Set of names in :class:`.DataZip` as if it was a MutableMapping.
+
+
+
+   .. py:method:: read_dfs()
+
+      Read all dfs lazily.
+
+      .. admonition:: DeprecationWarning
+         :class: warning
+
+         ``read_dfs`` will be removed in a future version, use :meth:`.DataZip.items`.
+
+
+
+
+   .. py:method:: writed(name, data)
+
+      Write dict, df, str, or some other objects to name.
+
+      .. admonition:: DeprecationWarning
+         :class: warning
+
+         ``writed`` will be removed in a future version, use ``self[key] = data``.
+
+
+
+

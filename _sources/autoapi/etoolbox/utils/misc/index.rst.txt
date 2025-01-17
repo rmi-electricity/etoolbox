@@ -1,0 +1,73 @@
+etoolbox.utils.misc
+===================
+
+.. py:module:: etoolbox.utils.misc
+
+.. autoapi-nested-parse::
+
+   Miscellaneous helpers and utilities.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   etoolbox.utils.misc.download
+   etoolbox.utils.misc.ungzip
+   etoolbox.utils.misc.have_internet
+   etoolbox.utils.misc.all_logging_disabled
+
+
+Module Contents
+---------------
+
+.. py:function:: download(url, fname)
+
+   Download a file with a progress bar.
+
+   :param url: location of file to download.
+   :param fname: a file or buffer to download the file to.
+
+   Returns: None
+
+
+
+.. py:function:: ungzip(zip_path, out_path=None)
+
+   Un gzip a file with a progress bar.
+
+   :param zip_path: path of gzip archive.
+   :param out_path: path of resulting output file, if not provided will be the same as
+                    zip_path without ``.gz`` suffix.
+
+   Returns: None
+
+
+
+.. py:function:: have_internet(host = '8.8.8.8')
+
+   Check if internet is available.
+
+   :param host: address to use in check, default 8.8.8.8 (Google DNS)
+
+
+.. py:function:: all_logging_disabled(highest_level=logging.CRITICAL)
+
+   Context manager to disable logging.
+
+   A context manager that will prevent any logging messages
+   triggered during the body from being processed.
+
+   :param highest_level: the maximum logging level in use.
+
+   This would only need to be changed if a custom level greater than CRITICAL
+   is defined.
+
+   two kind-of hacks here:
+       * can't get the highest logging level in effect => delegate to the user
+       * can't get the current module-level override => use an undocumented
+         (but non-private!) interface
+
+
